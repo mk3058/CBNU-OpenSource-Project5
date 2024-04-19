@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bus Location Map</title>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var googleMapsApiKey = [[${googleMapsApiKey}]];
+
+        function loadGoogleMaps() {
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=' + googleMapsApiKey + '&callback=initMap';
+            document.head.appendChild(script);
+        }
+
+        function loadBusPositions() {
+            var busId = document.getElementById('busId').value;
+            var url = '/bus?busId=' + busId;
+
+            fetch(url)
+                .then(handleResponse)
+                .then(initMap)
+                .catch(handleError);
+        }
+
+        function handleResponse(response) {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        }
+
+        function initMap(locations) {
+            var mapContainer = document.getElementById('map-container');
+            mapContainer.style.display = 'block';
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: {lat: 37.630134, lng: 127.0708}
+            });
+
+            locations.forEach(function (location) {
+                var latLng = new google.maps.LatLng(location.gpsY, location.gpsX);
+                var marker = new google.maps.Marker({
+                    position: latLng,
+                    map: map
+                });
+            });
+        }
+
+        function handleError(error) {
+            console.error('Error:', error);
+        }
+
+        /*]]>*/
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #map-container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 80%;
+            padding-top: 60%;
+            position: relative;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #search-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        #search-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #search-button:hover {
+            background-color: #0056b3;
+        }
+
+        #busId {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body onload="loadGoogleMaps()">
+<div id="map-container">
+    <div id="map"></div>
+</div>
+<div id="search-container">
+    <input type="text" id="busId" placeholder="Enter Bus Route Number">
+    <button id="search-button" onclick="loadBusPositions()">Load Bus Positions</button>
+</div>
+</body>
+</html>
